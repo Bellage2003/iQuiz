@@ -160,18 +160,61 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         super.viewDidLoad()
         self.title = "iQuiz"
         setupNetworkMonitoring()
+        setupSwipeGestures()
+        showSwipeHints()
         fetchQuizData()
         setupTableView()
         setupToolbar()
         setupQuestionUI()
     }
     
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        if UserDefaults.standard.string(forKey: "DataSourceURL") == nil {
-            UserDefaults.standard.set("https://tednewardsandbox.site44.com/questions.json", forKey: "DataSourceURL")
-        }
-        return true
+    func setupSwipeGestures() {
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeRight))
+        swipeRight.direction = .left
+        view.addGestureRecognizer(swipeRight)
+
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeLeft))
+        swipeLeft.direction = .right
+        view.addGestureRecognizer(swipeLeft)
     }
+
+    @objc private func handleSwipeRight(_ gesture: UISwipeGestureRecognizer) {
+        if gesture.state == .ended {
+            print("Swiped right: Submit answer or go to next")
+            if submitButton.isHidden {
+                handleNext()
+            } else {
+                submitAnswer()
+            }
+        }
+    }
+
+    @objc private func handleSwipeLeft(_ gesture: UISwipeGestureRecognizer) {
+        if gesture.state == .ended {
+            backToTopics()
+            print("Swiped left: abandon quiz")
+        }
+    }
+    
+    private func showSwipeHints() {
+        let swipeRightHint = UILabel(frame: CGRect(x: view.bounds.width - 160, y: view.bounds.height - 100, width: 150, height: 50))
+        swipeRightHint.text = "Swipe Right ➡️\nSubmit/Next"
+        swipeRightHint.numberOfLines = 0
+        swipeRightHint.textAlignment = .right
+        swipeRightHint.backgroundColor = UIColor.systemGray5
+        swipeRightHint.layer.cornerRadius = 10
+        swipeRightHint.clipsToBounds = true
+        view.addSubview(swipeRightHint)
+
+        let swipeLeftHint = UILabel(frame: CGRect(x: 10, y: view.bounds.height - 100, width: 150, height: 50))
+        swipeLeftHint.text = "  Swipe Left ⬅️\n  Quit Quiz"
+        swipeLeftHint.numberOfLines = 0
+        swipeLeftHint.backgroundColor = UIColor.systemGray5
+        swipeLeftHint.layer.cornerRadius = 10
+        swipeLeftHint.clipsToBounds = true
+        view.addSubview(swipeLeftHint)
+    }
+
     
     func setupNetworkMonitoring() {
         networkMonitor.pathUpdateHandler = { path in
@@ -371,9 +414,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
 
     func resetQuiz() {
-        //currentQuizIndex = 0
-        //currentQuestionIndex = 0
-        //correctAnswersCount = 0
         resultLabel.text = ""
         questionLabel.isHidden = true
         buttonsStackView.isHidden = true
